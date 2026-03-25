@@ -1,0 +1,14 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{layout/header :: head('Error')}"></head>
+<body>
+<nav th:replace="~{layout/header :: navbar}"></nav>
+<div class="container" style="padding:80px 24px; text-align:center;">
+  <div style="font-size:96px; font-weight:900; color:#f3f4f6; line-height:1;" th:text="${status}">500</div>
+  <h2 style="font-size:24px; margin:16px 0 8px;" th:text="${error ?: 'Something went wrong'}">Error</h2>
+  <p style="color:#6b7280; margin-bottom:24px;" th:text="${message ?: 'An unexpected error occurred.'}"></p>
+  <a href="/courses" class="btn-primary">Back to Home</a>
+</div>
+<footer th:replace="~{layout/footer :: footer}"></footer>
+</body>
+</html>

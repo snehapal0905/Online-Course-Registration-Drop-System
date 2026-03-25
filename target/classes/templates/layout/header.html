@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:fragment="head(pageTitle)">
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title th:text="${pageTitle} + ' | LearnHub'">LearnHub</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:wght@400;600;700&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" th:href="@{/css/style.css}"/>
+</head>
+<body>
+<nav th:fragment="navbar" class="navbar">
+  <div class="nav-container">
+    <a href="/courses" class="brand">
+      <span class="brand-icon">L</span>
+      <span class="brand-name">LearnHub</span>
+    </a>
+
+    <form method="get" action="/courses" class="nav-search-form">
+      <input type="hidden" name="studentCode" th:value="${selectedStudentCode}"/>
+      <div class="nav-search-wrap">
+        <svg class="search-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+        <input type="text" name="search" class="nav-search" placeholder="Search courses..." th:value="${search}"/>
+      </div>
+    </form>
+
+    <div class="nav-right">
+      <a href="/courses" class="nav-link">Browse</a>
+      <a href="/my-courses" class="nav-link">My Learning</a>
+      <a href="/admin" class="nav-link nav-admin">Admin</a>
+
+      <div class="student-picker">
+        <form method="get" th:action="@{/courses}" id="sPicker">
+          <input type="hidden" name="category" th:value="${selectedCategory}"/>
+          <input type="hidden" name="search" th:value="${search}"/>
+          <select name="studentCode" class="student-select" onchange="document.getElementById('sPicker').submit()">
+            <option value="">Switch Student</option>
+            <option th:each="s : ${students}" th:value="${s.studentCode}"
+                    th:text="${s.fullname}" th:selected="${s.studentCode == selectedStudentCode}"/>
+          </select>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Credit bar if student selected -->
+  <div class="credit-bar" th:if="${student != null}">
+    <div class="credit-bar-inner">
+      <span class="credit-label">
+        <svg viewBox="0 0 20 20" fill="currentColor" width="14"><path d="M10.394 2.08a1 1 0 00-.788 0l-7 3a1 1 0 000 1.84L5.25 8.051a.999.999 0 01.356-.257l4-1.714a1 1 0 11.788 1.838L7.667 9.088l1.94.831a1 1 0 00.787 0l7-3a1 1 0 000-1.838l-7-3zM3.31 9.397L5 10.12v4.102a8.969 8.969 0 00-1.05-.174 1 1 0 01-.89-.89 11.115 11.115 0 01.25-3.762zM9.3 16.573A9.026 9.026 0 007 14.935v-3.957l1.818.78a3 3 0 002.364 0l5.508-2.361a11.026 11.026 0 01.25 3.762 1 1 0 01-.89.89 8.968 8.968 0 00-5.35 2.524 1 1 0 01-1.4 0zM6 18a1 1 0 001-1v-2.065a8.935 8.935 0 00-2-.712V17a1 1 0 001 1z"/></svg>
+        Logged in as <strong th:text="${student.fullname}">Student</strong>
+      </span>
+      <div class="credit-meter">
+        <span class="credit-text" th:text="${usedCredits ?: 0} + ' / ' + ${maxCredits ?: 30} + ' credits used'">0/30</span>
+        <div class="credit-bar-track">
+          <div class="credit-bar-fill"
+               th:style="'width:' + (${maxCredits != null and maxCredits > 0} ? (${(usedCredits ?: 0) * 100 / maxCredits}) : 0) + '%'">
+          </div>
+        </div>
+        <span class="credit-remain" th:text="${(maxCredits ?: 30) - (usedCredits ?: 0)} + ' remaining'">30 remaining</span>
+      </div>
+      <a th:href="@{/my-courses(studentCode=${student.studentCode})}" class="credit-mylink">View My Courses</a>
+    </div>
+  </div>
+</nav>
+</body>
+</html>

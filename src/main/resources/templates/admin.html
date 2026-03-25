@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{layout/header :: head('Admin Dashboard')}"></head>
+<body>
+<nav th:replace="~{layout/header :: navbar}"></nav>
+
+<main>
+  <div class="container" style="padding-top:32px; padding-bottom:48px;">
+    <div class="page-hero">
+      <h1>Admin Dashboard</h1>
+      <p>View all enrollments, revenue, and student activity across the platform</p>
+    </div>
+
+    <!-- Stats row -->
+    <div class="stats-row">
+      <div class="stat-card stat-active">
+        <div class="stat-num" th:text="${totalEnrollments}">0</div>
+        <div class="stat-label">Total Enrollments</div>
+      </div>
+      <div class="stat-card stat-total">
+        <div class="stat-num" th:text="'Rs. ' + ${totalRevenue}">0</div>
+        <div class="stat-label">Total Revenue</div>
+      </div>
+      <div class="stat-card stat-courses">
+        <div class="stat-num" th:text="${#lists.size(allCourses)}">0</div>
+        <div class="stat-label">Active Courses</div>
+      </div>
+      <div class="stat-card stat-students">
+        <div class="stat-num" th:text="${#lists.size(allStudents)}">0</div>
+        <div class="stat-label">Students</div>
+      </div>
+    </div>
+
+    <!-- Filter -->
+    <div class="admin-filter">
+      <form method="get" action="/admin" class="filter-form">
+        <label class="filter-label">Filter by course:</label>
+        <select name="filterCourseId" class="filter-select">
+          <option value="">All Courses</option>
+          <option th:each="c : ${allCourses}"
+                  th:value="${c.id}"
+                  th:text="${c.courseCode} + ' - ' + ${c.title}"
+                  th:selected="${filterCourseId == c.id.toString()}">
+          </option>
+        </select>
+        <button type="submit" class="btn-primary btn-sm">Apply</button>
+        <a href="/admin" class="btn-outline btn-sm">Clear</a>
+      </form>
+    </div>
+
+    <!-- Table -->
+    <div th:if="${not #lists.isEmpty(enrollments)}" class="admin-table-wrap">
+      <table class="admin-table">
+        <thead>
+          <tr>
+            <th>Student</th>
+            <th>Course</th>
+            <th>Credits</th>
+            <th>Amount Paid</th>
+            <th>Enrolled On</th>
+            <th>Drop By</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr th:each="en : ${enrollments}">
+            <td>
+              <div class="td-main" th:text="${en.student.fullname}">Name</div>
+              <div class="td-sub" th:text="${en.student.studentCode}">Code</div>
+            </td>
+            <td>
+              <div class="td-main" th:text="${en.course.title}">Title</div>
+              <div class="td-sub" th:text="${en.course.courseCode} + ' | ' + ${en.course.category}">Cat</div>
+            </td>
+            <td>
+              <span class="credit-chip-sm" th:text="${en.course.creditHours} + ' cr'"></span>
+            </td>
+            <td th:text="'Rs. ' + ${#numbers.formatDecimal(en.amountPaid, 0, 0)}">0</td>
+            <td th:text="${#temporals.format(en.enrolledAt, 'dd MMM yyyy')}">Date</td>
+            <td>
+              <span th:classappend="${en.droppable} ? ' td-deadline-ok' : ' td-deadline-done'"
+                    th:text="${en.dropDeadline}">Date</span>
+            </td>
+            <td>
+              <span class="status-badge"
+                    th:classappend="${en.enrollmentStatus.name() == 'ACTIVE'} ? ' sb-active' : ' sb-dropped'"
+                    th:text="${en.enrollmentStatus.name()}">Status</span>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="empty-state" th:if="${#lists.isEmpty(enrollments)}">
+      <div class="empty-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" width="56"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+      </div>
+      <h3>No enrollments yet</h3>
+      <p>Students can enroll in courses from the Browse Courses page</p>
+    </div>
+  </div>
+</main>
+
+<footer th:replace="~{layout/footer :: footer}"></footer>
+</body>
+</html>

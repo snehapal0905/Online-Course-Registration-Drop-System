@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{layout/header :: head('Browse Courses')}"></head>
+<body>
+<nav th:replace="~{layout/header :: navbar}"></nav>
+
+<main>
+  <!-- ALERTS -->
+  <div th:if="${successMsg}" class="toast toast-success" th:text="${successMsg}"></div>
+  <div th:if="${errorMsg}"   class="toast toast-error"   th:text="${errorMsg}"></div>
+
+  <!-- HERO -->
+  <section class="hero">
+    <div class="hero-inner">
+      <div class="hero-text">
+        <h1>Expand your career opportunities<br/><span class="hero-accent">with LearnHub</span></h1>
+        <p>Credit-based academic course enrollment. Enroll in any course, and drop within the deadline for a full refund.</p>
+        <div class="hero-badges">
+          <span class="hero-badge">20+ Courses</span>
+          <span class="hero-badge">Credit-Based System</span>
+          <span class="hero-badge">Drop Anytime Before Deadline</span>
+        </div>
+      </div>
+      <div class="hero-visual">
+        <div class="hero-card-stack">
+          <div th:each="c, i : ${bestsellers}" th:if="${i.index < 3}"
+               class="hero-mini-card"
+               th:style="'background:' + ${c.thumbnailColor}">
+            <div class="hmc-code" th:text="${c.courseCode}"></div>
+            <div class="hmc-title" th:text="${c.title}"></div>
+            <div class="hmc-rating">&#9733; <span th:text="${c.rating}"></span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CATEGORY PILLS -->
+  <section class="cat-section">
+    <div class="container">
+      <div class="cat-scroll">
+        <a th:href="@{/courses(studentCode=${selectedStudentCode})}"
+           class="cat-chip" th:classappend="${selectedCategory == '' or selectedCategory == null} ? ' selected' : ''">All Courses</a>
+        <a th:each="cat : ${categories}"
+           th:href="@{/courses(studentCode=${selectedStudentCode},category=${cat})}"
+           class="cat-chip"
+           th:classappend="${selectedCategory == cat} ? ' selected' : ''"
+           th:text="${cat}">Category</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- STUDENT NOT SELECTED BANNER -->
+  <div class="select-banner" th:if="${selectedStudentCode == null or selectedStudentCode == ''}">
+    <div class="container">
+      <svg viewBox="0 0 20 20" fill="currentColor" width="18"><path d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z"/></svg>
+      &nbsp;Select a student from the top-right dropdown to enroll in courses
+    </div>
+  </div>
+
+  <!-- MAIN COURSE GRID -->
+  <section class="courses-section">
+    <div class="container">
+      <div class="section-header">
+        <h2 th:text="${search != '' ? 'Results for: ' + search : (selectedCategory != '' ? selectedCategory + ' Courses' : 'All Courses')}">All Courses</h2>
+        <span class="course-count" th:text="${#lists.size(courses)} + ' courses'">0 courses</span>
+      </div>
+
+      <div class="courses-grid" th:if="${not #lists.isEmpty(courses)}">
+        <div th:each="course : ${courses}"
+             class="course-card"
+             th:classappend="${enrolledIds != null and enrolledIds.contains(course.id)} ? ' is-enrolled' : ''">
+
+          <!-- Thumbnail -->
+          <div class="course-thumb" th:style="'background:' + ${course.thumbnailColor}">
+            <div class="thumb-code" th:text="${course.courseCode}"></div>
+            <div class="thumb-title" th:text="${course.title}"></div>
+            <div class="thumb-instructor" th:text="${course.instructor}"></div>
+            <div th:if="${course.bestseller}" class="bestseller-tag">Bestseller</div>
+          </div>
+
+          <!-- Card Body -->
+          <div class="card-body">
+            <div class="card-top-row">
+              <span class="card-category" th:text="${course.category}">Cat</span>
+              <span class="card-level"
+                    th:classappend="${course.difficultyLevel == 'Beginner'} ? ' lvl-beg' : (${course.difficultyLevel == 'Advanced'} ? ' lvl-adv' : ' lvl-int')"
+                    th:text="${course.difficultyLevel}">Level</span>
+            </div>
+
+            <h3 class="card-title" th:text="${course.title}">Title</h3>
+            <p class="card-by">by <span th:text="${course.instructor}">Instructor</span></p>
+
+            <div class="card-rating">
+              <span class="rating-score" th:text="${#numbers.formatDecimal(course.rating, 1, 1)}">4.5</span>
+              <div class="stars">
+                <span th:each="i : ${#numbers.sequence(1, 5)}"
+                      th:classappend="${i <= course.rating} ? ' filled' : ''">&#9733;</span>
+              </div>
+              <span class="rating-count" th:text="'(' + ${#numbers.formatDecimal(course.totalRatings / 1000.0, 1, 1)} + 'k)'"></span>
+            </div>
+
+            <div class="card-meta-row">
+              <span class="meta-item" th:text="${course.totalLectures} + ' lectures'"></span>
+              <span class="meta-dot">&#xb7;</span>
+              <span class="meta-item" th:text="${course.durationHours} + ' hours'"></span>
+              <span class="meta-dot">&#xb7;</span>
+              <span class="meta-item credit-chip" th:text="${course.creditHours} + ' credits'"></span>
+            </div>
+
+            <div class="card-drop-info">
+              Drop within <strong th:text="${course.dropDeadlineDays} + ' days'"></strong> of enrollment
+            </div>
+          </div>
+
+          <!-- CARD FOOTER: price + enroll button — OUTSIDE card-body so it always shows -->
+          <div class="card-footer">
+            <div class="price-block">
+              <span class="price-current" th:text="'Rs. ' + ${#numbers.formatDecimal(course.price, 0, 0)}"></span>
+              <span class="price-original" th:if="${course.originalPrice > course.price}"
+                    th:text="'Rs. ' + ${#numbers.formatDecimal(course.originalPrice, 0, 0)}"></span>
+              <span class="price-discount" th:if="${course.discountPercent > 0}"
+                    th:text="${course.discountPercent} + '% off'"></span>
+            </div>
+
+            <!-- No student selected -->
+            <span th:if="${selectedStudentCode == null or selectedStudentCode == ''}" class="card-select-hint">Pick a student</span>
+
+            <!-- Already enrolled badge -->
+            <div th:if="${selectedStudentCode != null and selectedStudentCode != '' and enrolledIds != null and enrolledIds.contains(course.id)}"
+                 class="enrolled-badge">
+              <svg viewBox="0 0 20 20" fill="currentColor" width="14"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>
+              Enrolled
+            </div>
+
+            <!-- ENROLL NOW BUTTON -->
+            <form th:if="${selectedStudentCode != null and selectedStudentCode != '' and (enrolledIds == null or !enrolledIds.contains(course.id))}"
+                  method="post" action="/enroll" style="margin:0;">
+              <input type="hidden" name="studentCode" th:value="${selectedStudentCode}"/>
+              <input type="hidden" name="courseId" th:value="${course.id}"/>
+              <input type="hidden" name="returnTo" value="/courses"/>
+              <button type="submit" class="btn-enroll">Enroll Now</button>
+            </form>
+          </div>
+
+        </div><!-- end course-card -->
+      </div><!-- end courses-grid -->
+
+      <div class="empty-state" th:if="${#lists.isEmpty(courses)}">
+        <div class="empty-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" width="64"><path d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/></svg>
+        </div>
+        <h3>No courses found</h3>
+        <a href="/courses" class="btn-outline">Browse All Courses</a>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer th:replace="~{layout/footer :: footer}"></footer>
+
+<script>
+setTimeout(() => {
+  document.querySelectorAll('.toast').forEach(t => { t.style.transition='opacity .5s'; t.style.opacity='0'; });
+}, 4000);
+</script>
+</body>
+</html>

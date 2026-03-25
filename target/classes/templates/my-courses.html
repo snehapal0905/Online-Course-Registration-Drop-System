@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{layout/header :: head('My Learning')}"></head>
+<body>
+<nav th:replace="~{layout/header :: navbar}"></nav>
+
+<main>
+  <div th:if="${successMsg}" class="toast toast-success" th:text="${successMsg}"></div>
+  <div th:if="${errorMsg}"   class="toast toast-error"   th:text="${errorMsg}"></div>
+
+  <div class="container" style="padding-top:32px; padding-bottom:48px;">
+
+    <div class="page-hero">
+      <h1>My Learning</h1>
+      <p>Track your enrolled courses and manage your academic schedule</p>
+    </div>
+
+    <!-- No student selected -->
+    <div class="empty-state" th:if="${selectedStudentCode == null or selectedStudentCode == ''}">
+      <div class="empty-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" width="56"><path d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z"/></svg>
+      </div>
+      <h3>Select a student to view their learning dashboard</h3>
+      <p>Use the student selector in the navigation bar</p>
+    </div>
+
+    <!-- Student dashboard -->
+    <div th:if="${student != null}">
+      <!-- Student Info + Credit Summary -->
+      <div class="dashboard-header">
+        <div class="dash-avatar" th:text="${student.fullname.substring(0,1)}">A</div>
+        <div class="dash-info">
+          <h2 th:text="${student.fullname}">Student Name</h2>
+          <p th:text="${student.email}">email</p>
+          <span class="dash-code" th:text="${student.studentCode}">STU001</span>
+        </div>
+        <div class="dash-credits">
+          <div class="dc-block">
+            <div class="dc-num" th:text="${usedCredits}">0</div>
+            <div class="dc-label">Credits Used</div>
+          </div>
+          <div class="dc-divider"></div>
+          <div class="dc-block">
+            <div class="dc-num" th:text="${student.maxCredits - usedCredits}">30</div>
+            <div class="dc-label">Available</div>
+          </div>
+          <div class="dc-divider"></div>
+          <div class="dc-block">
+            <div class="dc-num" th:text="${student.maxCredits}">30</div>
+            <div class="dc-label">Max Credits</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Stats row -->
+      <div class="stats-row">
+        <div class="stat-card stat-active">
+          <div class="stat-num" th:text="${activeCount}">0</div>
+          <div class="stat-label">Active Enrollments</div>
+        </div>
+        <div class="stat-card stat-dropped">
+          <div class="stat-num" th:text="${droppedCount}">0</div>
+          <div class="stat-label">Dropped / Refunded</div>
+        </div>
+        <div class="stat-card stat-total">
+          <div class="stat-num" th:text="${activeCount + droppedCount}">0</div>
+          <div class="stat-label">Total Enrollments</div>
+        </div>
+      </div>
+
+      <!-- Credit Progress bar -->
+      <div class="credit-progress-card">
+        <div class="cp-header">
+          <span>Semester Credit Usage</span>
+          <span class="cp-fraction" th:text="${usedCredits} + ' / ' + ${student.maxCredits} + ' credits'"></span>
+        </div>
+        <div class="cp-bar">
+          <div class="cp-fill"
+               th:style="'width:' + (${student.maxCredits} > 0 ? ${usedCredits} * 100 / ${student.maxCredits} : 0) + '%;'"
+               th:classappend="${usedCredits * 100 / student.maxCredits > 80} ? ' cp-fill-danger' : ''"></div>
+        </div>
+        <div class="cp-sub" th:text="${student.maxCredits - usedCredits} + ' credits remaining this semester'"></div>
+      </div>
+
+      <!-- No enrollments -->
+      <div class="empty-state" th:if="${enrollments == null or #lists.isEmpty(enrollments)}">
+        <div class="empty-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" width="56"><path d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/></svg>
+        </div>
+        <h3>No enrollments yet</h3>
+        <a th:href="@{/courses(studentCode=${selectedStudentCode})}" class="btn-primary">Browse Courses</a>
+      </div>
+
+      <!-- Enrollment list -->
+      <div class="enrollment-list" th:if="${not #lists.isEmpty(enrollments)}">
+        <h3 class="section-title-sm">Your Courses</h3>
+        <div th:each="en : ${enrollments}" class="enrollment-card"
+             th:classappend="${en.enrollmentStatus.name() == 'ACTIVE'} ? ' en-active' : ' en-dropped'">
+
+          <div class="en-thumb" th:style="'background:' + ${en.course.thumbnailColor}">
+            <span th:text="${en.course.courseCode}"></span>
+          </div>
+
+          <div class="en-body">
+            <div class="en-top">
+              <span class="status-badge"
+                    th:classappend="${en.enrollmentStatus.name() == 'ACTIVE'} ? ' sb-active' : ' sb-dropped'"
+                    th:text="${en.enrollmentStatus.name()}">ACTIVE</span>
+              <span class="en-semester" th:text="${en.semesterLabel}">Spring 2025</span>
+            </div>
+            <h4 class="en-title" th:text="${en.course.title}">Title</h4>
+            <p class="en-instructor" th:text="'by ' + ${en.course.instructor}">by Instructor</p>
+
+            <div class="en-meta">
+              <span th:text="${en.course.creditHours} + ' credit hours'"></span>
+              <span class="meta-dot">·</span>
+              <span th:text="${en.course.durationHours} + 'h content'"></span>
+              <span class="meta-dot">·</span>
+              <span th:text="'Paid: Rs. ' + ${#numbers.formatDecimal(en.amountPaid, 0, 0)}"></span>
+            </div>
+
+            <div class="en-dates" th:if="${en.enrollmentStatus.name() == 'ACTIVE'}">
+              <div class="date-chip"
+                   th:classappend="${en.daysUntilDeadline <= 3} ? ' date-urgent' : (${en.daysUntilDeadline <= 7} ? ' date-warn' : '')">
+                <svg viewBox="0 0 20 20" fill="currentColor" width="12"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clip-rule="evenodd"/></svg>
+                <span th:if="${en.daysUntilDeadline > 0}" th:text="'Drop by ' + ${en.dropDeadline} + ' (' + ${en.daysUntilDeadline} + ' days left)'"></span>
+                <span th:if="${en.daysUntilDeadline <= 0}" class="deadline-passed">Drop deadline passed</span>
+              </div>
+            </div>
+            <div class="en-dates" th:if="${en.enrollmentStatus.name() == 'DROPPED'}">
+              <div class="date-chip date-dropped">
+                Dropped on <span th:text="${#temporals.format(en.droppedAt, 'dd MMM yyyy')}"></span> &bull; Refund processed
+              </div>
+            </div>
+          </div>
+
+          <div class="en-actions">
+            <!-- Drop button -->
+            <form th:if="${en.enrollmentStatus.name() == 'ACTIVE' and en.droppable}"
+                  method="post" action="/drop">
+              <input type="hidden" name="enrollmentId" th:value="${en.id}"/>
+              <input type="hidden" name="studentCode" th:value="${selectedStudentCode}"/>
+              <button type="submit" class="btn-drop"
+                      onclick="return confirm('Drop this course and request a refund?')">
+                Drop &amp; Refund
+              </button>
+            </form>
+            <div th:if="${en.enrollmentStatus.name() == 'ACTIVE' and !en.droppable}" class="en-no-drop">
+              Drop deadline<br/>has passed
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</main>
+
+<footer th:replace="~{layout/footer :: footer}"></footer>
+<script>setTimeout(() => { document.querySelectorAll('.toast').forEach(t => t.style.opacity='0'); }, 4000);</script>
+</body>
+</html>
